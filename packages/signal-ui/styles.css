@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+/* Scan the component sources so utilities used in JSX are generated. */
+@source "./src/**/*.{ts,tsx}";
+
+/* ============================================================
+   SignalFoundry design tokens.
+   Dark blue-slate surfaces with a single warm amber accent.
+   Consumers style via Tailwind utilities that read these tokens
+   (bg-surface, text-accent, border-line, …) or the var(--color-*)
+   custom properties directly.
+   ============================================================ */
+@theme {
+  /* Surfaces (darkest -> most elevated) */
+  --color-bg: #0f1218;
+  --color-surface: #171b23;
+  --color-surface-2: #1e232d;
+  --color-elevated: #272d39;
+
+  /* Structure */
+  --color-line: #2a303b;
+  --color-line-strong: #3a4150;
+
+  /* Foreground / text ramp */
+  --color-fg: #f3f5f8;
+  --color-fg-soft: #c4c9d3;
+  --color-muted: #868d9c;
+  --color-muted-2: #5b6271;
+  --color-faint: #363d4a;
+
+  /* The single accent — warm amber. */
+  --color-accent: #f86a1e;
+  --color-accent-bright: #ff8a3d;
+  --color-accent-ink: #b8500f;
+
+  /* Type roles (system stacks — no brand fonts shipped) */
+  --font-display: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* Tabular numerics for any data/metrics. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* Uppercase micro-label used for information architecture. */
+.eyebrow {
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  font-weight: 500;
+}
+
+/* Warm ambient glow used behind promo surfaces. */
+.accent-glow {
+  background: radial-gradient(
+    120% 120% at 100% 0%,
+    color-mix(in oklab, var(--color-accent) 22%, transparent) 0%,
+    transparent 60%
+  );
+}
