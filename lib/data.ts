@@ -893,3 +893,50 @@ export function operatorProfile(operatorId: string): OperatorProfileData | undef
 export function allOperatorIds(): string[] {
   return OPERATORS.map((o) => o.id);
 }
+
+// ===========================================================================
+// Portfolio layer (docs/product-roadmap.md — P1).
+// The investor's consolidated view. Concierge MVP is single-investor, so the
+// portfolio spans all theses; committed capital = budgets of completed sprints.
+// ===========================================================================
+
+export interface PortfolioRow {
+  thesis: Thesis;
+  committed: number; // sum of completed sprint budgets
+  next?: Sprint; // the open sprint, if any
+  phasesDone: number;
+}
+
+export function portfolioRows(): PortfolioRow[] {
+  return THESES.map((thesis) => {
+    const done = thesis.sprints.filter((s) => s.status === "done");
+    return {
+      thesis,
+      committed: done.reduce((sum, s) => sum + s.budget, 0),
+      next: openSprint(thesis),
+      phasesDone: done.length,
+    };
+  }).sort((a, b) => b.thesis.signalStrength - a.thesis.signalStrength);
+}
+
+export interface PortfolioSummary {
+  totalCommitted: number;
+  openToSponsor: number;
+  sprintsSponsored: number;
+  formationReady: number;
+}
+
+export function portfolioSummary(): PortfolioSummary {
+  const rows = portfolioRows();
+  return {
+    totalCommitted: rows.reduce((s, r) => s + r.committed, 0),
+    openToSponsor: rows.reduce((s, r) => s + (r.next?.budget ?? 0), 0),
+    sprintsSponsored: THESES.reduce(
+      (s, t) => s + t.sprints.filter((sp) => sp.status === "done").length,
+      0,
+    ),
+    // A venture is formation-ready when its open gate is the phase-5 pilot,
+    // or every gate has closed.
+    formationReady: rows.filter((r) => !r.next || r.next.phase === 5).length,
+  };
+}
