@@ -65,7 +65,7 @@ export function OperatorProfile({ data }: { data: OperatorProfileData }) {
         </div>
       </header>
 
-      <div className="mt-6 grid gap-8 lg:grid-cols-[300px_1fr]">
+      <div className="mt-6 grid gap-8 lg:grid-cols-[340px_1fr]">
         {/* Proof profile radar */}
         <section>
           <p className="eyebrow mb-2">Proof profile</p>
