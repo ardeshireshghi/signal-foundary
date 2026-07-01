@@ -1093,3 +1093,93 @@ export function signalsByCategory(): SignalCategoryCount[] {
     count: SIGNALS.filter((s) => s.category === category).length,
   }));
 }
+
+// ===========================================================================
+// Evidence Graph layer (docs/product-roadmap.md — Evidence Graph; the moat).
+// Flattens the compounding data asset for the explorer: stage counts (the
+// flywheel) + a browsable evidence stream + the moat-layer descriptions.
+// ===========================================================================
+
+export interface EvidenceRecord {
+  id: string;
+  text: string;
+  thesisId: string;
+  thesisTitle: string;
+  sector: string;
+  sprintId: string;
+  phase: number;
+  sprintTitle: string;
+}
+
+export function allEvidence(): EvidenceRecord[] {
+  const out: EvidenceRecord[] = [];
+  for (const thesis of THESES) {
+    for (const sprint of thesis.sprints) {
+      if (sprint.status !== "done") continue;
+      sprint.evidence.forEach((text, i) => {
+        out.push({
+          id: `${sprintKey(thesis.id, sprint.phase)}-e${i}`,
+          text,
+          thesisId: thesis.id,
+          thesisTitle: thesis.title,
+          sector: thesis.sector,
+          sprintId: sprintKey(thesis.id, sprint.phase),
+          phase: sprint.phase,
+          sprintTitle: sprint.title,
+        });
+      });
+    }
+  }
+  return out;
+}
+
+export interface GraphStage {
+  key: string;
+  label: string;
+  count: number;
+  sub: string;
+}
+
+export function graphStages(): GraphStage[] {
+  const sprintsDone = THESES.reduce(
+    (s, t) => s + t.sprints.filter((sp) => sp.status === "done").length,
+    0,
+  );
+  const evidenceCount = allEvidence().length;
+  return [
+    { key: "signals", label: "Market signals", count: SIGNALS.length, sub: "detected" },
+    { key: "theses", label: "Theses", count: THESES.length, sub: "originated" },
+    { key: "sprints", label: "Sprints", count: sprintsDone, sub: "completed" },
+    { key: "evidence", label: "Evidence items", count: evidenceCount, sub: "captured" },
+    { key: "operators", label: "Operators", count: OPERATORS.length, sub: "scored" },
+    { key: "formation", label: "Formation", count: portfolioSummary().formationReady, sub: "ready" },
+  ];
+}
+
+export interface MoatLayer {
+  layer: string;
+  compounds: string;
+}
+
+export const MOAT_LAYERS: MoatLayer[] = [
+  {
+    layer: "Proprietary opportunity data",
+    compounds: "Every thesis is tagged by market, buyer, workflow, pain, regulation, competitor density, and funding context.",
+  },
+  {
+    layer: "Sprint outcome benchmarks",
+    compounds: "The platform learns what good discovery, prototype, and GTM validation look like, by category.",
+  },
+  {
+    layer: "Operator proof profiles",
+    compounds: "Talent is ranked by real outputs, not credentials — a founder-quality talent graph.",
+  },
+  {
+    layer: "Investor preference graph",
+    compounds: "The platform learns which investors sponsor which sectors, risks, ticket sizes, and formation paths.",
+  },
+  {
+    layer: "Workflow templates",
+    compounds: "Repeated sprints become structured venture playbooks for specific industries and models.",
+  },
+];
