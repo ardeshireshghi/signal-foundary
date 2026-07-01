@@ -8,22 +8,23 @@
    modifier (e.g. bg-accent/10, ring-accent/30).
    ============================================================ */
 @theme {
-  /* Surfaces (darkest -> most elevated) */
-  --color-bg: #0a0a0c;
-  --color-surface: #141416;
-  --color-surface-2: #1a1a1e;
-  --color-elevated: #212127;
+  /* Surfaces (darkest -> most elevated). Cool blue-slate tint, a touch
+     brighter than pure charcoal — the blue channel leads across the ramp. */
+  --color-bg: #0f1218;
+  --color-surface: #171b23;
+  --color-surface-2: #1e232d;
+  --color-elevated: #272d39;
 
   /* Structure */
-  --color-line: #262629;
-  --color-line-strong: #34343a;
+  --color-line: #2a303b;
+  --color-line-strong: #3a4150;
 
-  /* Foreground / text ramp */
-  --color-fg: #f4f3f1;
-  --color-fg-soft: #cbcace;
-  --color-muted: #8b8a92;
-  --color-muted-2: #605f67;
-  --color-faint: #3a3a40;
+  /* Foreground / text ramp — cooled a touch to sit on the blue-slate base */
+  --color-fg: #f3f5f8;
+  --color-fg-soft: #c4c9d3;
+  --color-muted: #868d9c;
+  --color-muted-2: #5b6271;
+  --color-faint: #363d4a;
 
   /* The single accent — warm amber. Used for the open gate, primary
      actions, active nav, and data highlights. Everything else stays neutral. */
