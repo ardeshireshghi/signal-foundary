@@ -8,6 +8,7 @@ import {
   Radar,
   Users,
   Share2,
+  Rocket,
   Stethoscope,
   Landmark,
   Leaf,
@@ -31,6 +32,7 @@ const OVERVIEW: NavItem[] = [
   { label: "Signals Radar", href: "/signals", icon: Radar },
   { label: "Operator Network", href: "/operators", icon: Users },
   { label: "Evidence Graph", href: "/evidence", icon: Share2 },
+  { label: "Formation", href: "/formation", icon: Rocket },
 ];
 
 const SECTOR_ICONS: Record<string, LucideIcon> = {

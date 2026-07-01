@@ -1183,3 +1183,112 @@ export const MOAT_LAYERS: MoatLayer[] = [
     compounds: "Repeated sprints become structured venture playbooks for specific industries and models.",
   },
 ];
+
+// ===========================================================================
+// Formation layer (docs/product-roadmap.md — Formation board + workspace).
+// The funding-path endpoint: validated theses become companies. Derived from
+// how far a thesis has progressed and which operators proved out on it.
+// ===========================================================================
+
+export type FormationStatus = "candidate" | "forming";
+
+export interface FormationRole {
+  title: string;
+  operatorId?: string;
+}
+
+export interface CapTableEntry {
+  holder: string;
+  pct: number;
+}
+
+export interface FundingStep {
+  label: string;
+  done: boolean;
+}
+
+export interface Formation {
+  thesisId: string;
+  thesisTitle: string;
+  sector: string;
+  status: FormationStatus;
+  phasesDone: number;
+  founderShortlist: Operator[];
+  roles: FormationRole[];
+  capTable: CapTableEntry[];
+  fundingSteps: FundingStep[];
+  formationFee: number;
+}
+
+// Light equity, per the pitch — the platform helps form the company but keeps
+// its stake small.
+const FORMATION_CAP_TABLE: CapTableEntry[] = [
+  { holder: "Founding team", pct: 70 },
+  { holder: "Seed investors", pct: 15 },
+  { holder: "Operator option pool", pct: 10 },
+  { holder: "SignalFoundry", pct: 5 },
+];
+
+function buildFormation(thesis: Thesis): Formation | null {
+  const phasesDone = thesis.sprints.filter((s) => s.status === "done").length;
+  // A venture becomes a formation candidate once demand is captured (phase 3+).
+  if (phasesDone < 3) return null;
+
+  // Founder shortlist: operators who proved out on this thesis, best proof first.
+  const opIds = new Set<string>();
+  for (const sprint of thesis.sprints) {
+    const op = operatorForSprint(thesis.id, sprint);
+    if (op) opIds.add(op.id);
+  }
+  const shortlist = [...opIds]
+    .map((id) => OPERATORS.find((o) => o.id === id)!)
+    .sort(
+      (a, b) =>
+        (operatorProfile(b.id)?.overall ?? 0) - (operatorProfile(a.id)?.overall ?? 0),
+    )
+    .slice(0, 3);
+
+  const roles: FormationRole[] = [
+    { title: "Founding CEO", operatorId: shortlist[0]?.id },
+    { title: "Founding engineer", operatorId: shortlist[1]?.id },
+    { title: "GTM lead", operatorId: shortlist[2]?.id },
+    { title: "Domain advisor" },
+  ];
+
+  const forming = phasesDone >= 4;
+  const fundingSteps: FundingStep[] = [
+    { label: "Pilot LOIs signed", done: forming },
+    { label: "Company incorporated", done: false },
+    { label: "Cap table finalized", done: false },
+    { label: "Seed round opened", done: false },
+  ];
+
+  return {
+    thesisId: thesis.id,
+    thesisTitle: thesis.title,
+    sector: thesis.sector,
+    status: forming ? "forming" : "candidate",
+    phasesDone,
+    founderShortlist: shortlist,
+    roles,
+    capTable: FORMATION_CAP_TABLE,
+    fundingSteps,
+    formationFee: 15000,
+  };
+}
+
+export function formationsForBoard(): Formation[] {
+  return THESES.map(buildFormation)
+    .filter((f): f is Formation => f !== null)
+    .sort((a, b) => b.phasesDone - a.phasesDone);
+}
+
+export function getFormation(thesisId: string): Formation | undefined {
+  const thesis = getThesis(thesisId);
+  if (!thesis) return undefined;
+  return buildFormation(thesis) ?? undefined;
+}
+
+export function allFormationIds(): string[] {
+  return formationsForBoard().map((f) => f.thesisId);
+}
