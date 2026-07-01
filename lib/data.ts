@@ -68,7 +68,115 @@ export function openSprint(t: Thesis): Sprint | undefined {
 }
 
 export function fmtMoney(n: number): string {
-  return "$" + (n >= 1000 ? `${Math.round(n / 100) / 10}K` : `${n}`);
+  if (n >= 1_000_000) return "$" + (n / 1_000_000).toFixed(1) + "M";
+  if (n >= 1000) return "$" + Math.round(n / 100) / 10 + "K";
+  return "$" + n;
+}
+
+// ---------------------------------------------------------------------------
+// Investor identity + portfolio analytics that back the console dashboard.
+// Kept here (not in JSX) so the UI stays data-driven.
+// ---------------------------------------------------------------------------
+
+export interface Investor {
+  name: string;
+  role: string;
+  initials: string;
+}
+
+export const INVESTOR: Investor = {
+  name: "Ardeshir E.",
+  role: "Partner",
+  initials: "AE",
+};
+
+export interface Portfolio {
+  totalBudget: number;
+  allocated: number;
+  deployed: number;
+}
+
+export const PORTFOLIO: Portfolio = {
+  totalBudget: 5_000_000,
+  allocated: 1_200_000,
+  deployed: 3_377_000,
+};
+
+/** Capital not yet allocated or deployed — available to sponsor new sprints. */
+export function openCapital(p: Portfolio = PORTFOLIO): number {
+  return p.totalBudget - p.allocated - p.deployed;
+}
+
+/** Recent avg-signal trend for the KPI sparkline. */
+export const SIGNAL_TREND = [61, 64, 62, 69, 66, 72, 70, 74, 73, 76];
+
+export const AVG_TIME_TO_GATE_DAYS = 14;
+
+export interface SignalDriver {
+  label: string;
+  delta: number; // percentage-point contribution
+}
+
+export const SIGNAL_DRIVERS: SignalDriver[] = [
+  { label: "Regulation changes", delta: 24 },
+  { label: "Workflow pain", delta: 18 },
+  { label: "Capital flowing in", delta: 15 },
+  { label: "Tech unlock (AI)", delta: 12 },
+  { label: "Talent availability", delta: 8 },
+];
+
+export interface Preferences {
+  sectors: string[];
+  stageFocus: string;
+  ticket: string;
+  geography: string;
+}
+
+export const PREFERENCES: Preferences = {
+  sectors: ["Healthcare", "Fintech", "Climate"],
+  stageFocus: "Validation, Early traction",
+  ticket: "$2K – $20K",
+  geography: "North America",
+};
+
+// ---- Derived selectors over the thesis set -------------------------------
+
+export function totalCapitalOpen(theses: Thesis[] = THESES): number {
+  // Portfolio capital available to deploy.
+  return openCapital();
+}
+
+export function avgSignalStrength(theses: Thesis[] = THESES): number {
+  if (theses.length === 0) return 0;
+  return Math.round(
+    theses.reduce((s, t) => s + t.signalStrength, 0) / theses.length,
+  );
+}
+
+export interface SignalBucket {
+  label: string;
+  min: number;
+  max: number;
+  count: number;
+}
+
+/** Distribution of signal strength across four bands for the rail chart. */
+export function signalDistribution(theses: Thesis[] = THESES): SignalBucket[] {
+  const bands: SignalBucket[] = [
+    { label: "0–40", min: 0, max: 40, count: 0 },
+    { label: "41–60", min: 41, max: 60, count: 0 },
+    { label: "61–80", min: 61, max: 80, count: 0 },
+    { label: "81–100", min: 81, max: 100, count: 0 },
+  ];
+  for (const t of theses) {
+    const b = bands.find((b) => t.signalStrength >= b.min && t.signalStrength <= b.max);
+    if (b) b.count += 1;
+  }
+  return bands;
+}
+
+export function getThesis(id: string): Thesis | undefined {
+  return THESES.find((t) => t.id === id);
 }
 
 export const THESES: Thesis[] = [
@@ -302,7 +410,7 @@ export const THESES: Thesis[] = [
     market: "US commercial HVAC contractors",
     sector: "Vertical B2B SaaS",
     ticket: "S",
-    signalStrength: 52,
+    signalStrength: 62,
     memo: {
       pain: "Commercial HVAC quotes require site data, parts pricing, and labour estimates stitched together by hand. Slow quotes lose jobs to whoever responds first.",
       wedge: "Own the quote artifact; expand into scheduling and invoicing once trusted.",
@@ -369,7 +477,7 @@ export const THESES: Thesis[] = [
     market: "US independent specialty clinics",
     sector: "Regulated SMB AI",
     ticket: "M",
-    signalStrength: 83,
+    signalStrength: 85,
     memo: {
       pain: "Prior authorization is a per-patient, per-payer maze. Front-desk staff spend hours on hold and in portals; denials delay care and revenue.",
       wedge: "Automate the payer interaction end to end for a narrow set of high-volume procedures first.",

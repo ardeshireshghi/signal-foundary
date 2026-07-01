@@ -1,23 +1,37 @@
 @import "tailwindcss";
 
-/* Design tokens — see docs/design-plan.md.
-   Deliberately not cream+terracotta, not dark+acid-green. One accent: cobalt. */
+/* ============================================================
+   Design tokens — see docs/design-plan.md.
+   Dark "situation room" theme with a single warm accent (amber/orange).
+   Components must reference these tokens, never hardcoded hex.
+   Alpha variants are produced at call sites with Tailwind's /opacity
+   modifier (e.g. bg-accent/10, ring-accent/30).
+   ============================================================ */
 @theme {
-  --color-ink: #141719;
-  --color-paper: #fafaf7;
-  --color-surface: #ffffff;
-  --color-line: #e4e3dd;
-  --color-line-strong: #cfcec6;
+  /* Surfaces (darkest -> most elevated) */
+  --color-bg: #0a0a0c;
+  --color-surface: #141416;
+  --color-surface-2: #1a1a1e;
+  --color-elevated: #212127;
 
-  --color-steel-1: #8a9099;
-  --color-steel-2: #6b727a;
-  --color-steel-3: #4e555c;
-  --color-steel-4: #3a4149;
+  /* Structure */
+  --color-line: #262629;
+  --color-line-strong: #34343a;
 
-  --color-signal: #1f3ae0;
-  --color-signal-ink: #16299e;
-  --color-signal-wash: #eef1fe;
+  /* Foreground / text ramp */
+  --color-fg: #f4f3f1;
+  --color-fg-soft: #cbcace;
+  --color-muted: #8b8a92;
+  --color-muted-2: #605f67;
+  --color-faint: #3a3a40;
 
+  /* The single accent — warm amber. Used for the open gate, primary
+     actions, active nav, and data highlights. Everything else stays neutral. */
+  --color-accent: #f86a1e;
+  --color-accent-bright: #ff8a3d;
+  --color-accent-ink: #b8500f;
+
+  /* Type roles */
   --font-display: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-newsreader), Georgia, "Times New Roman", serif;
   --font-mono: var(--font-plex-mono), ui-monospace, "SF Mono", Menlo, monospace;
@@ -25,24 +39,39 @@
 
 html,
 body {
-  background: var(--color-paper);
-  color: var(--color-ink);
+  background: var(--color-bg);
+  color: var(--color-fg);
   font-family: var(--font-display);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
-/* Tabular numerics everywhere data lives. */
+/* Tabular numerics wherever data lives. */
 .tnum {
-  font-feature-settings: "tnum" 1, "cv01" 1;
   font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
 }
 
-/* Uppercase micro-labels used for information architecture, sparingly. */
+/* Uppercase micro-labels for information architecture, used sparingly. */
 .eyebrow {
   font-size: 0.6875rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--color-steel-2);
+  color: var(--color-muted);
   font-weight: 500;
+}
+
+/* Warm ambient glow used behind the masthead / promo card. Tokenized. */
+.accent-glow {
+  background: radial-gradient(
+    120% 120% at 100% 0%,
+    color-mix(in oklab, var(--color-accent) 22%, transparent) 0%,
+    transparent 60%
+  );
+}
+
+/* Thin, unobtrusive scrollbars that fit the dark shell. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line-strong) transparent;
 }

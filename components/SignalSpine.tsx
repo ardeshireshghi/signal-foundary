@@ -1,22 +1,24 @@
 import { Sprint, fmtMoney } from "@/lib/data";
 
-// The one memorable signature (docs/design-plan.md §5).
-// A five-tick assay readout: done ● / open ◐ / locked ○.
-// Cobalt appears at full saturation ONLY on the open gate — the next fundable step.
+// The signature element (docs/design-plan.md §5).
+// Five-tick assay readout: done ● / open ◉(accent glow) / locked ○.
+// Accent appears at full saturation ONLY on the open gate — the next fundable step.
 
 function Node({ status }: { status: Sprint["status"] }) {
   if (status === "done") {
-    return <span className="h-2.5 w-2.5 rounded-full bg-steel-3" />;
+    return <span className="h-2 w-2 rounded-full bg-muted" />;
   }
   if (status === "open") {
     return (
       <span className="relative flex h-3.5 w-3.5 items-center justify-center">
-        <span className="absolute h-3.5 w-3.5 rounded-full bg-signal-wash" />
-        <span className="h-2.5 w-2.5 rounded-full bg-signal ring-2 ring-signal/25" />
+        <span className="absolute h-3.5 w-3.5 rounded-full bg-accent/25" />
+        <span className="h-2.5 w-2.5 rounded-full bg-accent ring-2 ring-accent/30" />
       </span>
     );
   }
-  return <span className="h-2.5 w-2.5 rounded-full border border-line-strong bg-surface" />;
+  return (
+    <span className="h-2 w-2 rounded-full border border-line-strong bg-surface" />
+  );
 }
 
 export function SignalSpine({ sprints }: { sprints: Sprint[] }) {
@@ -30,26 +32,24 @@ export function SignalSpine({ sprints }: { sprints: Sprint[] }) {
             <div className="flex items-center">
               <Node status={s.status} />
               {i < sprints.length - 1 && (
-                <span
-                  className={`h-px flex-1 ${done ? "bg-steel-3" : "bg-line"}`}
-                />
+                <span className="h-px flex-1 bg-line-strong" />
               )}
             </div>
             <div className="pr-2">
               <div
                 className={`truncate text-[11px] leading-tight ${
                   open
-                    ? "font-medium text-signal-ink"
+                    ? "font-medium text-accent"
                     : done
-                      ? "text-steel-3"
-                      : "text-steel-1"
+                      ? "text-fg-soft"
+                      : "text-muted-2"
                 }`}
               >
                 {s.short}
               </div>
               <div
                 className={`tnum text-[10px] leading-tight ${
-                  open ? "text-signal" : "text-steel-1"
+                  open ? "text-accent" : "text-muted-2"
                 }`}
               >
                 {done ? "done" : open ? `${fmtMoney(s.budget)} open` : "—"}
