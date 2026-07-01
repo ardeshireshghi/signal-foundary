@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+/* Design tokens — see docs/design-plan.md.
+   Deliberately not cream+terracotta, not dark+acid-green. One accent: cobalt. */
+@theme {
+  --color-ink: #141719;
+  --color-paper: #fafaf7;
+  --color-surface: #ffffff;
+  --color-line: #e4e3dd;
+  --color-line-strong: #cfcec6;
+
+  --color-steel-1: #8a9099;
+  --color-steel-2: #6b727a;
+  --color-steel-3: #4e555c;
+  --color-steel-4: #3a4149;
+
+  --color-signal: #1f3ae0;
+  --color-signal-ink: #16299e;
+  --color-signal-wash: #eef1fe;
+
+  --font-display: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-newsreader), Georgia, "Times New Roman", serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+html,
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-display);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Tabular numerics everywhere data lives. */
+.tnum {
+  font-feature-settings: "tnum" 1, "cv01" 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Uppercase micro-labels used for information architecture, sparingly. */
+.eyebrow {
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-steel-2);
+  font-weight: 500;
+}
