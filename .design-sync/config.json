@@ -1,0 +1,8 @@
+{
+  "shape": "package",
+  "pkg": "@signalfoundry/ui",
+  "globalName": "SignalFoundryUI",
+  "buildCmd": "npm --prefix packages/signal-ui run build",
+  "cssEntry": "dist/styles.css",
+  "readmeHeader": ".design-sync/conventions.md"
+}
