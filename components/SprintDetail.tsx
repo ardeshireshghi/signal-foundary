@@ -58,8 +58,17 @@ function OperatorCard({ operator }: { operator: Operator }) {
         ? "text-fg-soft"
         : "text-muted";
   return (
-    <div className="rounded-xl border border-line bg-surface p-4">
-      <p className="eyebrow mb-3">Assigned operator</p>
+    <Link
+      href={`/operators/${operator.id}`}
+      className="group block rounded-xl border border-line bg-surface p-4 transition hover:border-line-strong"
+    >
+      <div className="mb-3 flex items-center justify-between">
+        <p className="eyebrow">Assigned operator</p>
+        <ArrowUpRight
+          size={13}
+          className="text-muted-2 opacity-0 transition group-hover:opacity-100"
+        />
+      </div>
       <div className="flex items-center gap-3">
         <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/15 text-sm font-semibold text-accent">
           {operator.initials}
@@ -77,7 +86,7 @@ function OperatorCard({ operator }: { operator: Operator }) {
           {operator.founderReadiness}
         </span>
       </div>
-    </div>
+    </Link>
   );
 }
 

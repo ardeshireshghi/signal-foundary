@@ -791,3 +791,105 @@ export const THESES: Thesis[] = [
     ],
   },
 ];
+
+// ===========================================================================
+// Operator profile layer (docs/product-roadmap.md §3.3).
+// Aggregates an operator's proof-of-work across every sprint assigned to them
+// by operatorForSprint — no new stored data, all derived.
+// ===========================================================================
+
+export interface OperatorSprintRecord {
+  sprintId: string;
+  thesisId: string;
+  thesisTitle: string;
+  sector: string;
+  phase: number;
+  title: string;
+  status: SprintStatus;
+  outcome: SprintOutcome | null;
+}
+
+/** Every sprint this operator is assigned to, newest phase first. */
+export function sprintsForOperator(operatorId: string): OperatorSprintRecord[] {
+  const records: OperatorSprintRecord[] = [];
+  for (const thesis of THESES) {
+    for (const sprint of thesis.sprints) {
+      const op = operatorForSprint(thesis.id, sprint);
+      if (op?.id !== operatorId) continue;
+      records.push({
+        sprintId: sprintKey(thesis.id, sprint.phase),
+        thesisId: thesis.id,
+        thesisTitle: thesis.title,
+        sector: thesis.sector,
+        phase: sprint.phase,
+        title: sprint.title,
+        status: sprint.status,
+        outcome: outcomeForSprint(thesis.id, sprint),
+      });
+    }
+  }
+  return records;
+}
+
+export interface OperatorProfileData {
+  operator: Operator;
+  /** Per-dimension average across the operator's completed sprints. */
+  dimensions: DimensionScore[];
+  /** Overall average of the dimension averages (0 if no completed sprints). */
+  overall: number;
+  sprintsCompleted: number;
+  sprintsActive: number;
+  records: OperatorSprintRecord[];
+  /** A few evidence samples pulled from completed sprints. */
+  evidenceSamples: { text: string; thesisTitle: string }[];
+}
+
+export function operatorProfile(operatorId: string): OperatorProfileData | undefined {
+  const operator = OPERATORS.find((o) => o.id === operatorId);
+  if (!operator) return undefined;
+
+  const records = sprintsForOperator(operatorId);
+  const completed = records.filter((r) => r.outcome);
+
+  // Average each dimension across completed sprints.
+  const sums: Record<string, number> = {};
+  for (const r of completed) {
+    for (const d of r.outcome!.scores) {
+      sums[d.key] = (sums[d.key] ?? 0) + d.score;
+    }
+  }
+  const dimensions: DimensionScore[] = DIMENSIONS.map((d) => ({
+    key: d.key,
+    label: d.label,
+    score: completed.length ? Math.round(sums[d.key] / completed.length) : 0,
+  }));
+  const overall = completed.length
+    ? Math.round(dimensions.reduce((s, d) => s + d.score, 0) / dimensions.length)
+    : 0;
+
+  const evidenceSamples: { text: string; thesisTitle: string }[] = [];
+  for (const thesis of THESES) {
+    for (const sprint of thesis.sprints) {
+      if (operatorForSprint(thesis.id, sprint)?.id !== operatorId) continue;
+      if (sprint.status !== "done") continue;
+      for (const e of sprint.evidence) {
+        if (evidenceSamples.length < 4)
+          evidenceSamples.push({ text: e, thesisTitle: thesis.title });
+      }
+    }
+  }
+
+  return {
+    operator,
+    dimensions,
+    overall,
+    sprintsCompleted: completed.length,
+    sprintsActive: records.filter((r) => r.status === "open").length,
+    records,
+    evidenceSamples,
+  };
+}
+
+export function allOperatorIds(): string[] {
+  return OPERATORS.map((o) => o.id);
+}
