@@ -940,3 +940,156 @@ export function portfolioSummary(): PortfolioSummary {
     formationReady: rows.filter((r) => !r.next || r.next.phase === 5).length,
   };
 }
+
+// ===========================================================================
+// Signals layer (docs/product-roadmap.md — Signals Radar; data-model.md Signal).
+// Market signals feed theses. Detected-at is a fixed relative label (no RNG /
+// Date so builds stay reproducible).
+// ===========================================================================
+
+export type SignalCategory =
+  | "Regulation"
+  | "Funding"
+  | "Workflow pain"
+  | "Tech unlock"
+  | "Talent";
+
+export interface Signal {
+  id: string;
+  headline: string;
+  source: string;
+  detectedAt: string; // relative label
+  category: SignalCategory;
+  market: string;
+  painHint: string;
+  strength: number; // 0..100
+  tags: string[];
+  thesisId?: string; // the thesis this signal helped originate
+}
+
+export const SIGNALS: Signal[] = [
+  {
+    id: "sig-dental-boards",
+    headline: "State dental boards move audit submissions online",
+    source: "Regulatory tracker",
+    detectedAt: "2 days ago",
+    category: "Regulation",
+    market: "US dental practices",
+    painHint: "Audit prep is manual and dreaded at small clinics",
+    strength: 82,
+    tags: ["healthcare", "compliance", "SMB"],
+    thesisId: "sf-dental-compliance",
+  },
+  {
+    id: "sig-priorauth-load",
+    headline: "Specialty clinics report prior-auth as #1 admin cost",
+    source: "Provider survey digest",
+    detectedAt: "5 days ago",
+    category: "Workflow pain",
+    market: "US independent specialty clinics",
+    painHint: "12+ staff-hours/week lost to payer portals",
+    strength: 88,
+    tags: ["healthcare", "RCM", "agents"],
+    thesisId: "sf-clinic-prior-auth",
+  },
+  {
+    id: "sig-clean-fuel",
+    headline: "Three more states adopt low-carbon-fuel standards",
+    source: "Policy feed",
+    detectedAt: "1 week ago",
+    category: "Regulation",
+    market: "US fuel & energy distributors",
+    painHint: "Quarterly emissions filing done by hand",
+    strength: 64,
+    tags: ["climate", "compliance", "mid-market"],
+    thesisId: "sf-fbo-fuel",
+  },
+  {
+    id: "sig-kyb-registry",
+    headline: "Beneficial-ownership registries become machine-readable",
+    source: "Data-source changelog",
+    detectedAt: "1 week ago",
+    category: "Tech unlock",
+    market: "US non-bank SMB lenders",
+    painHint: "Lenders can't detect mid-term ownership changes",
+    strength: 71,
+    tags: ["fintech", "KYB", "risk"],
+    thesisId: "sf-lender-kyb",
+  },
+  {
+    id: "sig-hvac-quoting",
+    headline: "Commercial HVAC contractors losing bids to slow quotes",
+    source: "Trade forum analysis",
+    detectedAt: "3 days ago",
+    category: "Workflow pain",
+    market: "US commercial HVAC contractors",
+    painHint: "Multi-day quoting cycle loses jobs to faster rivals",
+    strength: 52,
+    tags: ["vertical-saas", "field-service"],
+    thesisId: "sf-field-service",
+  },
+  {
+    id: "sig-ai-agents-ga",
+    headline: "Tool-using agents reach production reliability for narrow tasks",
+    source: "Model release notes",
+    detectedAt: "4 days ago",
+    category: "Tech unlock",
+    market: "Regulated SMB workflows",
+    painHint: "Repetitive payer/records tasks now automatable with review",
+    strength: 79,
+    tags: ["AI", "agents", "automation"],
+  },
+  {
+    id: "sig-compliance-hiring",
+    headline: "SMB compliance roles stay unfilled 60+ days",
+    source: "Job-postings index",
+    detectedAt: "6 days ago",
+    category: "Talent",
+    market: "US SMB services",
+    painHint: "No staff to own compliance — software must",
+    strength: 58,
+    tags: ["talent", "compliance", "SMB"],
+  },
+  {
+    id: "sig-vertical-funding",
+    headline: "Vertical AI seed rounds concentrate in regulated SMB",
+    source: "Funding data",
+    detectedAt: "2 weeks ago",
+    category: "Funding",
+    market: "Vertical AI",
+    painHint: "Capital chasing narrow, defensible wedges",
+    strength: 67,
+    tags: ["funding", "vertical-ai"],
+  },
+];
+
+export function getSignal(id: string): Signal | undefined {
+  return SIGNALS.find((s) => s.id === id);
+}
+
+export function allSignalIds(): string[] {
+  return SIGNALS.map((s) => s.id);
+}
+
+export function signalsForThesis(thesisId: string): Signal[] {
+  return SIGNALS.filter((s) => s.thesisId === thesisId);
+}
+
+export interface SignalCategoryCount {
+  category: SignalCategory;
+  count: number;
+}
+
+export function signalsByCategory(): SignalCategoryCount[] {
+  const cats: SignalCategory[] = [
+    "Regulation",
+    "Workflow pain",
+    "Tech unlock",
+    "Funding",
+    "Talent",
+  ];
+  return cats.map((category) => ({
+    category,
+    count: SIGNALS.filter((s) => s.category === category).length,
+  }));
+}
