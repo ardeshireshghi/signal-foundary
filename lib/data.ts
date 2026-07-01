@@ -179,6 +179,248 @@ export function getThesis(id: string): Thesis | undefined {
   return THESES.find((t) => t.id === id);
 }
 
+// ===========================================================================
+// Sprint detail layer (docs/product-roadmap.md §3.2).
+// Additive: keeps Sprint.evidence: string[] intact for ThesisDetail, and
+// derives the richer brief / operator / outcome from templates + stable ids so
+// we don't hand-edit every seed sprint. All data lives here, not in JSX.
+// ===========================================================================
+
+/** Stable, route-safe id for a sprint within its thesis. */
+export function sprintKey(thesisId: string, phase: number): string {
+  return `${thesisId}-p${phase}`;
+}
+
+// Deterministic FNV-1a hash (no Math.random — keeps builds reproducible).
+function hashString(s: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+export interface SprintBrief {
+  scope: string;
+  deliverables: string[];
+  rubric: string;
+  successCriteria: string;
+  timeline: string;
+}
+
+// One brief template per validation phase — the sprint's title/gate stay
+// thesis-specific; the working shape is shared across ventures.
+const PHASE_BRIEF: Record<number, SprintBrief> = {
+  1: {
+    scope:
+      "Map the market: buyer segments, existing tools, regulation triggers, and pricing hypotheses.",
+    deliverables: [
+      "Buyer segmentation (3–5 segments)",
+      "Competitor & substitute landscape",
+      "Regulation / trigger map",
+      "Pricing hypothesis memo",
+    ],
+    rubric:
+      "Depth and correctness of segmentation, quality of the competitor teardown, and defensibility of pricing hypotheses.",
+    successCriteria:
+      "A clear, sourced view of who buys, what already exists, and where a wedge could sit.",
+    timeline: "1 week",
+  },
+  2: {
+    scope:
+      "Run structured customer interviews to test pain frequency, budget ownership, and urgency.",
+    deliverables: [
+      "Interview guide",
+      "≥ 20 completed interviews",
+      "Pain-frequency & urgency synthesis",
+      "Representative verbatim quotes",
+    ],
+    rubric:
+      "Interview rigor, synthesis quality, evidence of real (not led) pull, and clarity on the budget owner.",
+    successCriteria:
+      "Evidence the pain is frequent, owned, and urgent enough to pay for.",
+    timeline: "2 weeks",
+  },
+  3: {
+    scope:
+      "Test whether demand can be captured with a landing page and waitlist.",
+    deliverables: [
+      "Landing page",
+      "2–3 messaging variants",
+      "Waitlist conversion report",
+      "Objection log",
+    ],
+    rubric:
+      "Message–market fit signal, conversion versus benchmark, and quality of objection capture.",
+    successCriteria:
+      "A conversion signal strong enough to justify building a prototype.",
+    timeline: "1 week",
+  },
+  4: {
+    scope:
+      "Build a clickable prototype and demonstrate the core workflow end to end.",
+    deliverables: [
+      "Clickable prototype",
+      "Sample outputs on real inputs",
+      "Risk review",
+      "Demo walkthrough",
+    ],
+    rubric:
+      "Whether the prototype shows real value, technical reasoning, and handling of edge cases and risk.",
+    successCriteria:
+      "A prototype that makes the value obvious to a target buyer.",
+    timeline: "3 weeks",
+  },
+  5: {
+    scope:
+      "Design a pilot and select the founding operator shortlist.",
+    deliverables: [
+      "Pilot design + LOIs",
+      "Operating plan",
+      "Founder / operator shortlist",
+      "Formation recommendation",
+    ],
+    rubric:
+      "Pilot credibility, commercial judgment, and readiness to form the company.",
+    successCriteria:
+      "A go / no-go formation decision backed by pilot commitments.",
+    timeline: "2 weeks",
+  },
+};
+
+/** Sprint agreement terms — shown for auditability (risk-architecture.md). */
+export const SPRINT_AGREEMENT = {
+  basis: "Work-for-hire",
+  ip: "All work product and IP assigns to the sponsoring venture entity on payment.",
+  confidentiality: "Mutual NDA — thesis and evidence stay confidential until published.",
+  formation:
+    "Operators completing a phase-5 sprint are eligible for founding-role consideration.",
+} as const;
+
+// ---- Operators (minimal — enough for the assigned-operator section) -------
+
+export type FounderReadiness = "emerging" | "strong" | "exceptional";
+
+export interface Operator {
+  id: string;
+  name: string;
+  initials: string;
+  skills: string[];
+  domains: string[];
+  founderReadiness: FounderReadiness;
+}
+
+export const OPERATORS: Operator[] = [
+  { id: "op-lena", name: "Lena Ortiz", initials: "LO", skills: ["Research", "GTM"], domains: ["Healthcare"], founderReadiness: "strong" },
+  { id: "op-priya", name: "Priya Nair", initials: "PN", skills: ["Product", "Technical"], domains: ["Fintech"], founderReadiness: "exceptional" },
+  { id: "op-marcus", name: "Marcus Reed", initials: "MR", skills: ["GTM", "Ops"], domains: ["Climate"], founderReadiness: "emerging" },
+  { id: "op-dan", name: "Dan Whitfield", initials: "DW", skills: ["Research", "Product"], domains: ["Vertical SaaS"], founderReadiness: "strong" },
+  { id: "op-aisha", name: "Aisha Khan", initials: "AK", skills: ["Technical", "Research"], domains: ["Regulated AI"], founderReadiness: "exceptional" },
+];
+
+// ---- Operator scoring dimensions (the 7 from the deck) --------------------
+
+export interface Dimension {
+  key: string;
+  label: string;
+}
+
+export const DIMENSIONS: Dimension[] = [
+  { key: "research", label: "Research depth" },
+  { key: "empathy", label: "Customer empathy" },
+  { key: "synthesis", label: "Synthesis quality" },
+  { key: "speed", label: "Speed" },
+  { key: "judgment", label: "Commercial judgment" },
+  { key: "technical", label: "Technical reasoning" },
+  { key: "ambiguity", label: "Ambiguity handling" },
+];
+
+export interface DimensionScore {
+  key: string;
+  label: string;
+  score: number; // 0..100
+}
+
+export interface SprintOutcome {
+  outcome: "passed" | "inconclusive";
+  scores: DimensionScore[];
+  overall: number;
+  gateDecision: string;
+  reviewerNotes: string;
+}
+
+/** Assigned operator: none for locked sprints; deterministic otherwise. */
+export function operatorForSprint(
+  thesisId: string,
+  sprint: Sprint,
+): Operator | null {
+  if (sprint.status === "locked") return null;
+  const idx = hashString(sprintKey(thesisId, sprint.phase)) % OPERATORS.length;
+  return OPERATORS[idx];
+}
+
+/** Scored outcome for completed sprints; null while open/locked. */
+export function outcomeForSprint(
+  thesisId: string,
+  sprint: Sprint,
+): SprintOutcome | null {
+  if (sprint.status !== "done") return null;
+  const base = sprintKey(thesisId, sprint.phase);
+  const scores = DIMENSIONS.map((d) => ({
+    key: d.key,
+    label: d.label,
+    score: 66 + (hashString(base + d.key) % 30), // 66..95, stable
+  }));
+  const overall = Math.round(
+    scores.reduce((s, d) => s + d.score, 0) / scores.length,
+  );
+  return {
+    outcome: "passed",
+    scores,
+    overall,
+    gateDecision: `Gate passed — ${sprint.gate.replace(/\?$/, "").toLowerCase()}: yes.`,
+    reviewerNotes:
+      "Human reviewer confirmed the AI pre-score. Evidence is source-backed and meets the rubric.",
+  };
+}
+
+export function briefForSprint(sprint: Sprint): SprintBrief {
+  return PHASE_BRIEF[sprint.phase];
+}
+
+export interface ResolvedSprint {
+  id: string;
+  thesis: Thesis;
+  sprint: Sprint;
+  brief: SprintBrief;
+  operator: Operator | null;
+  outcome: SprintOutcome | null;
+}
+
+/** Every sprint across all theses, with a stable id. */
+export function allSprintIds(): string[] {
+  return THESES.flatMap((t) => t.sprints.map((s) => sprintKey(t.id, s.phase)));
+}
+
+export function getSprint(id: string): ResolvedSprint | undefined {
+  for (const thesis of THESES) {
+    for (const sprint of thesis.sprints) {
+      if (sprintKey(thesis.id, sprint.phase) === id) {
+        return {
+          id,
+          thesis,
+          sprint,
+          brief: briefForSprint(sprint),
+          operator: operatorForSprint(thesis.id, sprint),
+          outcome: outcomeForSprint(thesis.id, sprint),
+        };
+      }
+    }
+  }
+  return undefined;
+}
+
 export const THESES: Thesis[] = [
   {
     id: "sf-dental-compliance",

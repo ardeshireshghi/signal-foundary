@@ -6,6 +6,7 @@ import {
   Confidence,
   fmtMoney,
   openSprint,
+  sprintKey,
 } from "@/lib/data";
 import { SignalStrength } from "./SignalStrength";
 
@@ -25,54 +26,63 @@ function ConfidenceTag({ c }: { c: Confidence }) {
   return <span className={`eyebrow rounded px-1.5 py-0.5 ${tone}`}>{CONF_LABEL[c]}</span>;
 }
 
-function SprintRow({ s }: { s: Sprint }) {
+function SprintRow({ thesisId, s }: { thesisId: string; s: Sprint }) {
   const open = s.status === "open";
   const done = s.status === "done";
   return (
-    <li
-      className={`rounded-lg border px-4 py-3 ${
-        open ? "border-accent/40 bg-accent/5" : "border-line bg-surface"
-      }`}
-    >
-      <div className="flex items-baseline justify-between gap-3">
-        <div className="flex min-w-0 items-baseline gap-2.5">
-          <span className={`tnum text-xs ${open ? "text-accent" : "text-muted-2"}`}>
-            0{s.phase}
-          </span>
-          <span className={`truncate text-sm ${done ? "text-muted" : "text-fg"}`}>
-            {s.title}
+    <li>
+      <Link
+        href={`/sprint/${sprintKey(thesisId, s.phase)}`}
+        className={`group block rounded-lg border px-4 py-3 transition ${
+          open
+            ? "border-accent/40 bg-accent/5 hover:border-accent/60"
+            : "border-line bg-surface hover:border-line-strong"
+        }`}
+      >
+        <div className="flex items-baseline justify-between gap-3">
+          <div className="flex min-w-0 items-baseline gap-2.5">
+            <span className={`tnum text-xs ${open ? "text-accent" : "text-muted-2"}`}>
+              0{s.phase}
+            </span>
+            <span className={`truncate text-sm ${done ? "text-muted" : "text-fg"}`}>
+              {s.title}
+            </span>
+          </div>
+          <span className="flex shrink-0 items-center gap-1.5">
+            <span
+              className={`tnum text-xs ${open ? "font-medium text-accent" : "text-muted"}`}
+            >
+              {fmtMoney(s.budget)}
+            </span>
+            <ArrowUpRight
+              size={13}
+              className="text-muted-2 opacity-0 transition group-hover:opacity-100"
+            />
           </span>
         </div>
-        <span
-          className={`tnum shrink-0 text-xs ${
-            open ? "font-medium text-accent" : "text-muted"
-          }`}
-        >
-          {fmtMoney(s.budget)}
-        </span>
-      </div>
 
-      <div className="mt-1.5 flex items-center gap-2">
-        <span
-          className={`eyebrow ${
-            done ? "text-muted" : open ? "text-accent" : "text-muted-2"
-          }`}
-        >
-          {done ? "closed" : open ? "gate open" : "locked"}
-        </span>
-        <span className="text-xs text-muted">{s.gate}</span>
-      </div>
+        <div className="mt-1.5 flex items-center gap-2">
+          <span
+            className={`eyebrow ${
+              done ? "text-muted" : open ? "text-accent" : "text-muted-2"
+            }`}
+          >
+            {done ? "closed" : open ? "gate open" : "locked"}
+          </span>
+          <span className="text-xs text-muted">{s.gate}</span>
+        </div>
 
-      {done && s.evidence.length > 0 && (
-        <ul className="mt-2.5 space-y-1.5 border-t border-line pt-2.5">
-          {s.evidence.map((e, i) => (
-            <li key={i} className="flex gap-2 text-[13px] leading-snug text-fg-soft">
-              <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-muted-2" />
-              <span>{e}</span>
-            </li>
-          ))}
-        </ul>
-      )}
+        {done && s.evidence.length > 0 && (
+          <ul className="mt-2.5 space-y-1.5 border-t border-line pt-2.5">
+            {s.evidence.map((e, i) => (
+              <li key={i} className="flex gap-2 text-[13px] leading-snug text-fg-soft">
+                <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-muted-2" />
+                <span>{e}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Link>
     </li>
   );
 }
@@ -153,7 +163,7 @@ export function ThesisDetail({ thesis }: { thesis: Thesis }) {
             <p className="eyebrow mb-2.5">Validation sprints</p>
             <ol className="space-y-2">
               {thesis.sprints.map((s) => (
-                <SprintRow key={s.phase} s={s} />
+                <SprintRow key={s.phase} thesisId={thesis.id} s={s} />
               ))}
             </ol>
           </div>
