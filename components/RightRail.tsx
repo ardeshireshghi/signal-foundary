@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Pencil } from "lucide-react";
 import {
   PORTFOLIO,
@@ -182,10 +183,13 @@ function PreferencesCard() {
     <Card
       title="Your Preferences"
       action={
-        <button className="flex items-center gap-1 text-xs text-accent transition hover:text-accent-bright">
+        <Link
+          href="/settings"
+          className="flex items-center gap-1 text-xs text-accent transition hover:text-accent-bright"
+        >
           <Pencil size={12} />
           Edit
-        </button>
+        </Link>
       }
     >
       <dl className="space-y-3">
